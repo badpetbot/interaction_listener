@@ -14,8 +14,13 @@ ARG ghpass
 # Ensure SSH is used to access GitHub.
 RUN git config --global url."https://${ghuser}:${ghpass}@github.com/".insteadOf "https://github.com/"
 
-# Copy the code to build.
 WORKDIR /api
+
+# Fetch dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the code to build.
 COPY . .
 
 # Build the binary.
