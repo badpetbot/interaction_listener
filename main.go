@@ -8,6 +8,7 @@ import (
 
   "github.com/bwmarrin/discordgo"
   "github.com/gofiber/fiber/v2"
+  "github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 var discordPublicKey ed25519.PublicKey
@@ -21,6 +22,8 @@ func main() {
   discordPublicKey = ed25519.PublicKey(publicKey)
 
   app := fiber.New()
+  
+  app.Use(logger.New())
 
   app.Get("/healthy", func (c *fiber.Ctx) error {
     c.JSON(map[string]string {
