@@ -14,7 +14,11 @@ var discordPublicKey ed25519.PublicKey
 
 func main() {
 
-  discordPublicKey = ed25519.PublicKey(os.Getenv("DISCORD_PUBLIC_KEY"))
+  publicKey, err := hex.DecodeString(os.Getenv("DISCORD_PUBLIC_KEY"))
+  if err != nil {
+    panic(err)
+  }
+  discordPublicKey = ed25519.PublicKey(publicKey)
 
   app := fiber.New()
 
