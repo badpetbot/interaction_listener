@@ -1,14 +1,15 @@
 package main
 
 import (
-  "crypto/ed25519"
-  "encoding/hex"
-  "fmt"
-  "os"
+	"crypto/ed25519"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"os"
 
-  "github.com/bwmarrin/discordgo"
-  "github.com/gofiber/fiber/v2"
-  "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/bwmarrin/discordgo"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 var discordPublicKey ed25519.PublicKey
@@ -56,11 +57,39 @@ func interactionHandler(c *fiber.Ctx) error {
   if err := c.BodyParser(interaction); err != nil {
     return err
   }
-  fmt.Println(interaction)
-  c.JSON(map[string]interface{} {
-    "type": discordgo.InteractionResponsePong,
-  })
-  return nil
+  
+  switch (interaction.Type) {
+
+  case discordgo.InteractionPing:
+    return c.JSON(discordgo.InteractionResponse{
+      Type: discordgo.InteractionResponsePong,
+    })
+
+  case discordgo.InteractionApplicationCommand:
+    if handler, exists := interactions[interaction.Data.(discordgo.ApplicationCommandInteractionData).Name]; !exists {
+      fmt.Println(errors.New("handler \"" + interaction.Data.(discordgo.ApplicationCommandInteractionData).Name + "\" does not exist"))
+      return c.JSON(discordgo.InteractionResponse{
+        Type: discordgo.InteractionResponsePong,
+      })
+    } else if response, err := handler(interaction); err != nil {
+      fmt.Println(errors.New("handler \"" + interaction.Data.(discordgo.ApplicationCommandInteractionData).Name + "\" failed with error: " + err.Error()))
+      return c.JSON(discordgo.InteractionResponse{
+        Type: discordgo.InteractionResponsePong,
+      })
+    } else {
+      return c.JSON(response)
+    }
+
+  case discordgo.InteractionMessageComponent:
+    return c.JSON(discordgo.InteractionResponse{
+      Type: discordgo.InteractionResponsePong,
+    })
+
+  default:
+    return c.JSON(discordgo.InteractionResponse{
+      Type: discordgo.InteractionResponsePong,
+    })
+  }
 }
 
 func verifyInteraction(c *fiber.Ctx, key ed25519.PublicKey) bool {
