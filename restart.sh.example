@@ -1,0 +1,4 @@
+docker build -t interaction_listener .
+docker stop bpb_interaction_listener
+docker rm bpb_interaction_listener
+docker run -d -p 127.0.0.1:3000:3000 -e DISCORD_PUBLIC_KEY=<KEYHERE> --name bpb_interaction_listener interaction_listener
